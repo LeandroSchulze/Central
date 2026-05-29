@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Usamos importación relativa con un punto (.) para evitar problemas de PATH en Railway
-from database import BasePanel, engine_panel
-from routers import metrics, auth, ai_advisor
+# AHROA SÍ: Usamos importación relativa con un punto (.) para decirle a Python 
+# que busque el archivo exactamente en esta misma carpeta actual
+from .database import BasePanel, engine_panel
+from .routers import metrics, auth, ai_advisor
 
-# Creamos las tablas locales en tu base del Panel si no existen (como la de historial)
+# Creamos las tablas locales en tu base del Panel si no existen
 BasePanel.metadata.create_all(bind=engine_panel)
 
 app = FastAPI(
@@ -13,19 +14,19 @@ app = FastAPI(
     description="Panel centralizado de monitoreo para AlertTrail y ComplianceFlow"
 )
 
-# Configuramos CORS por si vas a consumir el backend desde un dominio de frontend distinto o local
-add_middleware(
+# Corregido: add_middleware debe ser llamado desde el objeto app.
+app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción podés limitar esto a tu URL específica del frontend
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Inyección de módulos cargados de forma relativa
-include_router(auth.router)
-include_router(metrics.router)
-include_router(ai_advisor.router)
+# Corregido: include_router debe ser llamado desde el objeto app.
+app.include_router(auth.router)
+app.include_router(metrics.router)
+app.include_router(ai_advisor.router)
 
 @app.get("/")
 def root():
