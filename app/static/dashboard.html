@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torre de Control Ejecutiva</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
+
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <i class="fa-solid font-bold fa-tower-cell text-indigo-500 text-2xl"></i>
+            <h1 class="text-xl font-bold tracking-wide">TORRE DE CONTROL</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span id="tc-badge" class="bg-indigo-900 text-indigo-300 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-700">
+                TC: Cargando...
+            </span>
+            <button onclick="cerrarSesion()" class="text-gray-400 hover:text-red-400 transition">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        
+        <section id="seccion-login" class="max-w-md mx-auto bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl my-12">
+            <h2 class="text-2xl font-bold text-center mb-6">Acceso Exclusivo</h2>
+            <form id="form-login" class="space-y-4" onsubmit="ejecutarLogin(event)">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Usuario</label>
+                    <input type="text" id="login-user" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Contraseña</label>
+                    <input type="password" id="login-pass" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Código MFA (6 dígitos)</label>
+                    <input type="text" id="login-mfa" placeholder="000000" maxlength="6" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-center text-xl font-mono tracking-widest focus:outline-none focus:border-indigo-500 text-white">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition shadow-lg">
+                    Ingresar de Forma Segura
+                </button>
+            </form>
+        </section>
+
+        <section id="seccion-dashboard" class="hidden space-y-8">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <div>
+                    <p class="text-sm text-gray-400">Estado de tus aplicaciones en tiempo real</p>
+                    <span id="fecha-actualizacion" class="text-xs text-indigo-400 font-mono"></span>
+                </div>
+                <button onclick="cargarDatosDashboard()" class="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-arrows-rotate"></i> <span>Sincronizar Todo</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg space-y-6">
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2.5 bg-amber-900/40 text-amber-400 rounded-xl"><i class="fa-solid fa-bell text-xl"></i></div>
+                            <h3 class="text-lg font-bold tracking-wide">AlertTrail</h3>
+                        </div>
+                        <span class="bg-green-900/50 text-green-400 border border-green-700 text-xs px-2.5 py-0.5 rounded-full font-medium">Online</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50">
+                            <p class="text-xs text-gray-400 uppercase font-semibold">Total Usuarios</p>
+                            <p id="at-usuarios" class="text-3xl font-bold mt-1">-</p>
+                            <p id="at-crecimiento" class="text-xs font-medium mt-1"></p>
+                        </div>
+                        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50">
+                            <p class="text-xs text-gray-400 uppercase font-semibold">Nuevos Hoy</p>
+                            <p id="at-nuevos" class="text-3xl font-bold text-indigo-400 mt-1">-</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/40 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
+                        <span class="text-sm text-gray-300 font-medium"><i class="fa-solid fa-circle-check text-green-400 mr-2"></i>Planes Premium Activos:</span>
+                        <span id="at-planes" class="text-lg font-bold font-mono text-white">-</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg space-y-6">
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2.5 bg-blue-900/40 text-blue-400 rounded-xl"><i class="fa-solid fa-shield-halved text-xl"></i></div>
+                            <h3 class="text-lg font-bold tracking-wide">ComplianceFlow</h3>
+                        </div>
+                        <span class="bg-green-900/50 text-green-400 border border-green-700 text-xs px-2.5 py-0.5 rounded-full font-medium">Online</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50">
+                            <p class="text-xs text-gray-400 uppercase font-semibold">Total Usuarios</p>
+                            <p id="cf-usuarios" class="text-3xl font-bold mt-1">-</p>
+                            <p id="cf-crecimiento" class="text-xs font-medium mt-1"></p>
+                        </div>
+                        <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-700/50">
+                            <p class="text-xs text-gray-400 uppercase font-semibold">Nuevos Hoy</p>
+                            <p id="cf-nuevos" class="text-3xl font-bold text-indigo-400 mt-1">-</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/40 p-4 rounded-xl border border-gray-700 space-y-2">
+                        <div class="flex justify-between text-xs text-gray-400">
+                            <span>Pase Express ($20 USD): <strong id="cf-plan-express" class="text-white font-mono">-</strong></span>
+                            <span>Enterprise ($50 USD): <strong id="cf-plan-enterprise" class="text-white font-mono">-</strong></span>
+                        </div>
+                        <div class="border-t border-gray-700/50 pt-2 flex justify-between items-center">
+                            <span class="text-sm text-gray-300 font-medium">Facturación Estimada:</span>
+                            <span id="cf-facturacion" class="text-lg font-bold text-emerald-400 font-mono">-</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-gradient-to-br from-gray-800 to-indigo-950/40 border border-indigo-900/60 rounded-2xl p-6 shadow-xl space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-indigo-900 pb-3 gap-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-indigo-600 text-white rounded-xl shadow-md shadow-indigo-600/30">
+                            <i class="fa-solid fa-brain text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold tracking-wide">Consultor IA Residente</h3>
+                            <p class="text-xs text-indigo-300">Auditoría automática de negocio, ciberseguridad y TC dinámico</p>
+                        </div>
+                    </div>
+                    <button onclick="dispararAnalisisIA()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm px-4 py-2 rounded-lg shadow-md transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Ejecutar Auditoría</span>
+                    </button>
+                </div>
+                
+                <div id="ia-box-loading" class="hidden text-center py-8 text-gray-400 space-y-2">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-indigo-400"></i>
+                    <p class="text-sm font-medium">La IA está consolidando métricas y ejecutando el cambio de TC en tus apps...</p>
+                </div>
+                <div id="ia-box-content" class="bg-gray-900/80 border border-gray-700 rounded-xl p-4 min-h-[100px] whitespace-pre-line text-sm text-gray-300 leading-relaxed font-mono">
+                    Presioná "Ejecutar Auditoría" para que la Inteligencia Artificial analice tus sistemas y verifique el estado transaccional.
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = "http://localhost:8000/api/v1"; // Cambiar por tu URL de Railway en producción
+        let token_acceso = localStorage.getItem("panel_token") || "";
+
+        window.onload = function() {
+            evaluarPantalla();
+        }
+
+        function evaluarPantalla() {
+            if (token_acceso) {
+                document.getElementById("seccion-login").classList.add("hidden");
+                document.getElementById("seccion-dashboard").classList.remove("hidden");
+                cargarDatosDashboard();
+            } else {
+                document.getElementById("seccion-login").classList.remove("hidden");
+                document.getElementById("seccion-dashboard").classList.add("hidden");
+            }
+        }
+
+        async function ejecutarLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById("login-user").value;
+            const password = document.getElementById("login-pass").value;
+            const mfa_code = document.getElementById("login-mfa").value;
+
+            try {
+                // Hacemos el login enviando los parámetros necesarios
+                const respuesta = await fetch(`${API_BASE}/auth/login?username=${username}&password=${password}&mfa_code=${mfa_code}`, {
+                    method: 'POST'
+                });
+                
+                if (!respuesta.ok) throw new Error("Credenciales o código MFA incorrectos");
+                
+                const data = await respuesta.json();
+                token_acceso = data.access_token;
+                localStorage.setItem("panel_token", token_acceso);
+                evaluarPantalla();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem("panel_token");
+            token_acceso = "";
+            evaluarPantalla();
+        }
+
+        async function cargarDatosDashboard() {
+            try {
+                const res = await fetch(`${API_BASE}/metrics/dashboard`, {
+                    headers: { "Authorization": `Bearer ${token_acceso}` }
+                });
+                if (res.status === 401) return cerrarSesion();
+                const d = await res.json();
+
+                // Tipo de cambio global
+                document.getElementById("tc-badge").innerText = `TC Oficial: $${d.tipo_cambio} ARS`;
+                document.getElementById("fecha-actualizacion").innerText = `Última sincronización: ${d.fecha_reporte}`;
+
+                // Rellenar AlertTrail
+                document.getElementById("at-usuarios").innerText = d.alerttrail.usuarios_totales;
+                document.getElementById("at-nuevos").innerText = d.alerttrail.nuevos_hoy;
+                document.getElementById("at-planes").innerText = d.alerttrail.planes_activos.premium;
+                formatearCrecimiento(document.getElementById("at-crecimiento"), d.alerttrail.crecimiento_mensual_pct);
+
+                // Rellenar ComplianceFlow
+                document.getElementById("cf-usuarios").innerText = d.complianceflow.usuarios_totales;
+                document.getElementById("cf-nuevos").innerText = d.complianceflow.nuevos_hoy;
+                document.getElementById("cf-plan-express").innerText = d.complianceflow.planes_activos.pase_express_20usd;
+                document.getElementById("cf-plan-enterprise").innerText = d.complianceflow.planes_activos.enterprise_copiloto_50usd;
+                document.getElementById("cf-facturacion").innerText = `$${d.complianceflow.facturacion_estimada_ars.toLocaleString('es-AR')} ARS`;
+                formatearCrecimiento(document.getElementById("cf-crecimiento"), d.complianceflow.crecimiento_mensual_pct);
+
+            } catch (err) {
+                console.error("Error al sincronizar dashboard:", err);
+            }
+        }
+
+        async function dispararAnalisisIA() {
+            const loader = document.getElementById("ia-box-loading");
+            const box = document.getElementById("ia-box-content");
+            
+            loader.classList.remove("hidden");
+            box.classList.add("hidden");
+
+            try {
+                const res = await fetch(`${API_BASE}/ai/insights`, {
+                    headers: { "Authorization": `Bearer ${token_acceso}` }
+                });
+                const d = await res.json();
+                
+                // Mostramos el reporte del LLM y el feedback del cambio de tipo de cambio
+                let feedback_tc = `[PROCESO AUTOMÁTICO DE TC APLICADO A $${d.tipo_cambio_aplicado}]:\n`;
+                feedback_tc += `-> AlertTrail: ${d.cambio_automatico_tc.alerttrail}\n`;
+                feedback_tc += `-> ComplianceFlow: ${d.cambio_automatico_tc.complianceflow}\n`;
+                feedback_tc += `========================================================\n\n`;
+
+                box.innerText = feedback_tc + d.analisis_ia;
+            } catch (err) {
+                box.innerText = "Error crítico al conectar con el módulo de Inteligencia Artificial.";
+            } finally {
+                loader.add("hidden");
+                box.classList.remove("hidden");
+            }
+        }
+
+        function formatearCrecimiento(elemento, valor) {
+            if (valor > 0) {
+                elemento.className = "text-xs font-semibold text-green-400 mt-1";
+                elemento.innerHTML = `<i class="fa-solid fa-caret-up"></i> +${valor}% este mes`;
+            } else if (valor < 0) {
+                elemento.className = "text-xs font-semibold text-red-400 mt-1";
+                elemento.innerHTML = `<i class="fa-solid fa-caret-down"></i> ${valor}% este mes`;
+            } else {
+                elemento.className = "text-xs font-semibold text-gray-500 mt-1";
+                elemento.innerHTML = `<i class="fa-solid fa-minus"></i> 0% sin cambios`;
+            }
+        }
+    </script>
+</body>
+</html>
