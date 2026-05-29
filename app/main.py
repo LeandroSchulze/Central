@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import BasePanel, engine_panel
-from app.routers import metrics, auth, ai_advisor
+
+# Usamos importación relativa con un punto (.) para evitar problemas de PATH en Railway
+from .database import BasePanel, engine_panel
+from .routers import metrics, auth, ai_advisor
 
 # Creamos las tablas locales en tu base del Panel si no existen (como la de historial)
 BasePanel.metadata.create_all(bind=engine_panel)
@@ -20,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inyección de módulos
+# Inyección de módulos cargados de forma relativa
 app.include_router(auth.router)
 app.include_router(metrics.router)
 app.include_router(ai_advisor.router)
