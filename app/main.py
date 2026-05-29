@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Usamos importaciones absolutas apuntando desde la raíz del proyecto
+# Rutas absolutas estándar
 from app.database import BasePanel, engine_panel
 from app.routers import metrics, auth, ai_advisor
 
@@ -13,7 +13,7 @@ app = FastAPI(
     description="Panel centralizado de monitoreo para AlertTrail y ComplianceFlow"
 )
 
-# Inyectamos el middleware desde el objeto app
+# Configuramos CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inyección de módulos desde el objeto app
+# Inyección de módulos
 app.include_router(auth.router)
 app.include_router(metrics.router)
 app.include_router(ai_advisor.router)
