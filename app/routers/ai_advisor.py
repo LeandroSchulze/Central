@@ -17,30 +17,30 @@ DATA_ESTANDARES_COMPLIANCE = {
         "titulo": "Auditoría de Control de Accesos",
         "evidencia_id": "EV-ISO-A9-8812",
         "estado": "⚠️ OBSERVACIÓN DETECTADA",
-        "detalle": "Políticas AdministratorAccess asignadas a cuentas de desarrollo sin MFA activo."
+        "detail": "Políticas AdministratorAccess asignadas a cuentas de desarrollo sin MFA activo."
     },
     "SOC2-S3": {
         "norma": "SOC 2 Type II — CC6.3",
         "titulo": "Análisis Criptográfico S3",
         "evidencia_id": "EV-SOC2-S3-9202",
         "estado": "🟢 100% CUMPLIDO",
-        "detalle": "Public Access Block activo y cifrado SSE-S3 de forma persistente."
+        "detail": "Public Access Block activo y cifrado SSE-S3 de forma persistente."
     },
     "ISO-9001": {
         "norma": "ISO 9001 — Cláusula 8.2",
         "titulo": "Trazabilidad de Requisitos de Calidad",
         "evidencia_id": "EV-ISO9-QA-3321",
         "estado": "🟢 100% CUMPLIDO",
-        "detalle": "Pipeline CI/CD automatizado con aprobación cruzada digital firmada por control de calidad."
+        "detail": "Pipeline CI/CD automatizado con aprobación cruzada digital firmada por control de calidad."
     },
     "SOC1-FIN": {
         "norma": "SOC 1 — Controles ICFR",
         "titulo": "Matriz de Segregación de Funciones",
         "evidencia_id": "EV-SOC1-FIN-7741",
         "estado": "🟢 100% CUMPLIDO",
-        "detalle": "Firmas transaccionales de balances contables desacopladas de cuentas de desarrollo."
+        "detail": "Firmas transaccionales de balances contables desacopladas de cuentas de desarrollo."
     }
-} [cite: 18, 19, 20, 21, 22, 23, 24]
+}
 
 @router.get("/insights")
 def obtener_analisis_ia(
