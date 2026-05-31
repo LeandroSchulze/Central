@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Rutas absolutas estándar
+# Esto ahora va a funcionar porque database.py sí va a existir acá
 from app.database import BasePanel, engine_panel
 from app.routers import metrics, auth, ai_advisor
 
-# Creamos las tablas locales en tu base del Panel si no existen
 BasePanel.metadata.create_all(bind=engine_panel)
 
 app = FastAPI(
@@ -13,7 +12,6 @@ app = FastAPI(
     description="Panel centralizado de monitoreo para AlertTrail y ComplianceFlow"
 )
 
-# Configuramos CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -22,7 +20,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inyección de módulos
 app.include_router(auth.router)
 app.include_router(metrics.router)
 app.include_router(ai_advisor.router)
