@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_all, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # 1. Obtenemos la URL de conexión de PostgreSQL desde las variables de entorno de Railway
