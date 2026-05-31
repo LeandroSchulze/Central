@@ -12,7 +12,6 @@ import docx
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 
-import mercadopago
 
 from scanner import ComplianceScanner
 from reporter import ReportGenerator
