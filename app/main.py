@@ -12,8 +12,6 @@ import docx
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 
-
-from scanner import ComplianceScanner
 from reporter import ReportGenerator
 from auth import AuthManager
 from legal_config import LegalShield
