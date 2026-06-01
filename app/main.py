@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-# IMPORTACIONES ABSOLUTAS QUE YA FUNCIONAN PERFECTO
+# IMPORTACIONES ABSOLUTAS DEL ECOSISTEMA
 from app.routers.auth import AuthManager, router as auth_router
 from app.routers.metrics import router as metrics_router
 from app.routers.ai_advisor import router as ai_router
@@ -20,6 +20,21 @@ app = FastAPI(
 
 auth_handler = AuthManager()
 router = APIRouter()
+
+# 🛡️ RESOLVEDOR DINÁMICO DE RUTAS PARA TEMPLATES HTML
+MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def buscar_html(filename: str) -> str:
+    # Intenta buscar dentro de app/templates/
+    ruta_interna = os.path.join(MAIN_DIR, "templates", filename)
+    if os.path.exists(ruta_interna):
+        return ruta_interna
+    # Intenta buscar en la raíz templates/
+    ruta_raiz = os.path.join(os.path.dirname(MAIN_DIR), "templates", filename)
+    if os.path.exists(ruta_raiz):
+        return ruta_raiz
+    return ruta_interna
+
 
 def registrar_evento_local(mensaje: str):
     print(f"[{datetime.utcnow().isoformat()}] [PANEL_CENTRAL] {mensaje}")
@@ -51,7 +66,6 @@ def actualizar_tipo_cambio_interno(payload: dict, x_internal_token: str = Header
     return {"status": "actualizado", "nuevo_tipo_cambio": TIPO_CAMBIO}
 
 
-# 💡 EVITAMOS 'email-validator' USANDO STR + REGEX NATIVO DE PYDANTIC
 class UserRegister(BaseModel):
     email: str = Field(..., pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
     password: str
@@ -61,18 +75,18 @@ class UserLogin(BaseModel):
     codigo_mfa: str
 
 
-# --- VISTAS HTML ---
+# --- VISTAS HTML CORREGIDAS CON RUTA ABSOLUTA AUTOMÁTICA ---
 @app.get("/", response_class=HTMLResponse)
 def index(): 
-    return FileResponse("templates/index.html")
+    return FileResponse(buscar_html("index.html"))
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(): 
-    return FileResponse("templates/dashboard.html")
+    return FileResponse(buscar_html("dashboard.html"))
 
 @app.get("/login", response_class=HTMLResponse)
 def mostrar_login(): 
-    return FileResponse("templates/login.html")
+    return FileResponse(buscar_html("login.html"))
 
 
 # --- AUTENTICACIÓN ---
