@@ -1,3 +1,4 @@
+# app/main.py
 from fastapi import FastAPI, HTTPException, status, Request, APIRouter, Header
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, EmailStr
@@ -6,14 +7,18 @@ import psycopg2
 from datetime import datetime
 from dotenv import load_dotenv
 
-from auth import AuthManager
-from security import registrar_evento
+# CORRECCIÓN: Rutas de importación explícitas con prefijo app.
+from app.auth import AuthManager
+from app.security import registrar_evento
+from app.metrics import router as metrics_router
+from app.ai_advisor import router as ai_router
+from app.auth import router as auth_router
 
 load_dotenv()
 
 app = FastAPI(
-    title="Panel Central - AlertTrail & ComplianceFlow",
-    description="Panel unificado para monitoreo de usuarios, pagos, métricas y control del tipo de cambio.",
+    title="Torre de Control Central",
+    description="Panel unificado para monitoreo de usuarios, pagos y métricas de AlertTrail y ComplianceFlow.",
     version="1.0.0"
 )
 
@@ -25,7 +30,6 @@ router = APIRouter()
 # ==========================================
 TOKEN_INTERNO_SECRETO = os.getenv("TOKEN_SISTEMAS_SECRETO")
 
-# Convertimos la cotización base de forma segura
 raw_cotizacion = os.getenv("COTIZACION", "1000.0").strip()
 try:
     TIPO_CAMBIO = float(raw_cotizacion)
@@ -36,7 +40,6 @@ except ValueError:
 def actualizar_tipo_cambio_interno(payload: dict, x_internal_token: str = Header(None)):
     global TIPO_CAMBIO
     
-    # Validamos que la petición venga realmente de tus plataformas autorizadas
     if x_internal_token != TOKEN_INTERNO_SECRETO or not TOKEN_INTERNO_SECRETO:
         raise HTTPException(status_code=401, detail="No autorizado")
     
@@ -44,13 +47,11 @@ def actualizar_tipo_cambio_interno(payload: dict, x_internal_token: str = Header
     if nuevo_tc is None or not isinstance(nuevo_tc, (int, float)):
         raise HTTPException(status_code=400, detail="Valor de TC inválido")
     
-    # Se actualiza en la memoria del servidor
     TIPO_CAMBIO = float(nuevo_tc)
-    registrar_evento(f"Tipo de cambio actualizado mediante IA/Panel a: {TIPO_CAMBIO}")
+    registrar_evento(f"Tipo de cambio actualizado dinámicamente a: {TIPO_CAMBIO}")
     return {"status": "actualizado", "nuevo_tipo_cambio": TIPO_CAMBIO}
 
 
-# --- MODELOS DE DATOS (PYDANTIC) ---
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
@@ -58,54 +59,6 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     codigo_mfa: str
-
-
-# --- CONEXIÓN A BASE DE DATOS POSTGRES ---
-def obtener_conexion_db():
-    db_url = os.getenv("DATABASE_URL")
-    if db_url and db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-    return psycopg2.connect(db_url)
-
-
-# =====================================================================
-# 📊 ENDPOINTS DE MÉTRICAS (ALERTTRAIL & COMPLIANCEFLOW)
-# =====================================================================
-@app.get("/api/metrics/summary", tags=["Métricas Centrales"])
-def obtener_resumen_panel():
-    """
-    Endpoint principal del Dashboard para leer el estado de tus otras dos apps.
-    Aquí harás las consultas SQL a tu base de datos compartida o vinculada.
-    """
-    try:
-        with obtener_conexion_db() as conn:
-            with conn.cursor() as cursor:
-                # Ejemplo de cómo consultarás tus tablas en el futuro:
-                # cursor.execute("SELECT COUNT(*) FROM usuarios WHERE creado_hoy = TRUE")
-                # nuevos_usuarios = cursor.fetchone()[0]
-                
-                # Por ahora, devolvemos la estructura limpia que consumirá tu frontend:
-                return {
-                    "tipo_cambio_actual": TIPO_CAMBIO,
-                    "usuarios": {
-                        "nuevos_hoy": 0,       # Reemplazar con query real
-                        "activos_totales": 0   # Reemplazar con query real
-                    },
-                    "financiero": {
-                        "pagos_procesados_mes": 0,
-                        "moneda": "ARS"
-                    },
-                    "alerttrail": {
-                        "alertas_emitidas_hoy": 0,
-                        "logs_escaneados_total": 0
-                    },
-                    "complianceflow": {
-                        "usuarios_premium_activos": 0
-                    },
-                    "actualizado_en": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al conectar con la base de datos de métricas: {str(e)}")
 
 
 # --- VISTAS HTML ---
@@ -139,5 +92,8 @@ def login(usuario: UserLogin):
     return {"mensaje": "Acceso concedido"}
 
 
-# REGISTRO DEL ROUTER
+# CORRECCIÓN: Inclusión obligatoria de todos los routers del ecosistema
 app.include_router(router)
+app.include_router(metrics_router)
+app.include_router(ai_router)
+app.include_router(auth_router)
