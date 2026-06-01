@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
-import requests
 import os
+import sys
 import json
+import requests
+from fastapi import APIRouter, Depends, HTTPException
 
-# CORRECCIÓN: Importaciones corregidas apuntando a las rutas reales de tus archivos
-from app.metrics import obtener_dashboard_completo, obtener_tipo_cambio
-from app.database import get_db_panel, get_db_alerttrail, get_db_compliance
-from app.auth import verificar_usuario_actual
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Importaciones planas corregidas sin prefijo app
+from metrics import obtener_dashboard_completo, obtener_tipo_cambio
+from database import get_db_panel, get_db_alerttrail, get_db_compliance
+from auth import verificar_usuario_actual
 
 router = APIRouter(prefix="/api/v1/ai", tags=["AI Advisor"])
 
