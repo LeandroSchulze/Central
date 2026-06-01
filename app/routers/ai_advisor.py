@@ -1,10 +1,9 @@
-# app/ai_advisor.py
 from fastapi import APIRouter, Depends, HTTPException
 import requests
 import os
 import json
 
-# CORRECCIÓN: Importación directa desde app.metrics sin la subcarpeta 'routers'
+# CORRECCIÓN: Importaciones corregidas apuntando a las rutas reales de tus archivos
 from app.metrics import obtener_dashboard_completo, obtener_tipo_cambio
 from app.database import get_db_panel, get_db_alerttrail, get_db_compliance
 from app.auth import verificar_usuario_actual
