@@ -2,10 +2,10 @@ import os
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, status, APIRouter, Header
 from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-# IMPORTACIONES ABSOLUTAS REALES BASADAS EN TU CARPETA 'ROUTERS'
+# IMPORTACIONES ABSOLUTAS QUE YA FUNCIONAN PERFECTO
 from app.routers.auth import AuthManager, router as auth_router
 from app.routers.metrics import router as metrics_router
 from app.routers.ai_advisor import router as ai_router
@@ -51,12 +51,13 @@ def actualizar_tipo_cambio_interno(payload: dict, x_internal_token: str = Header
     return {"status": "actualizado", "nuevo_tipo_cambio": TIPO_CAMBIO}
 
 
+# 💡 EVITAMOS 'email-validator' USANDO STR + REGEX NATIVO DE PYDANTIC
 class UserRegister(BaseModel):
-    email: EmailStr
+    email: str = Field(..., pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
     password: str
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str = Field(..., pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
     codigo_mfa: str
 
 
