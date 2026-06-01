@@ -1,3 +1,5 @@
+import os
+import sys
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -5,8 +7,14 @@ from datetime import datetime, timedelta
 import requests
 import json
 
-from app.database import get_db_panel, get_db_alerttrail, get_db_compliance
-from app.models import HistorialMetricas
+# 🔥 INYECCIÓN DE SEGURIDAD PARA EVITAR CRASHES DE RUTAS EN RAILWAY
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# IMPORTACIONES PLANAS CORREGIDAS (Sin el prefijo app.)
+from database import get_db_panel, get_db_alerttrail, get_db_compliance
+from models import HistorialMetricas
 
 router = APIRouter(prefix="/api/v1/metrics", tags=["Metrics"])
 
@@ -67,19 +75,28 @@ def obtener_dashboard_completo(
     # ==========================================
     # 3. CÁLCULO DE VARIACIONES (%) HISTÓRICAS
     # ==========================================
-    # Buscamos la foto de hace 30 días en la base del Panel
-    foto_pasada = db_panel.query(HistorialMetricas).filter(
-        text("DATE(fecha) = :fecha_pasada")
-    ).params(fecha_pasada=hace_un_mes).first()
-
     at_crecimiento_pct = 0.0
     cf_crecimiento_pct = 0.0
 
-    if foto_pasada and foto_pasada.alerttrail_usuarios_totales > 0:
-        at_crecimiento_pct = ((at_totales - foto_pasada.alerttrail_usuarios_totales) / foto_pasada.alerttrail_usuarios_totales) * 100
-        
-    if foto_pasada and foto_pasada.compliance_usuarios_totales > 0:
-        cf_crecimiento_pct = ((cf_totales - foto_pasada.compliance_usuarios_totales) / foto_pasada.compliance_usuarios_totales) * 100
+    # Bloque seguro para evitar que inconsistencias en el mapeo histórico rompan el dashboard
+    try:
+        # Buscamos la foto de hace 30 días tolerando tanto la columna 'timestamp' como 'fecha'
+        foto_pasada = db_panel.query(HistorialMetricas).filter(
+            text("DATE(timestamp) = :fecha_pasada OR DATE(fecha) = :fecha_pasada")
+        ).params(fecha_pasada=hace_un_mes).first()
+
+        if foto_pasada:
+            # Leemos de forma segura los atributos por si aún usás filas mapeadas en vez de columnas directas
+            at_usuarios_pasados = getattr(foto_pasada, "alerttrail_usuarios_totales", 0)
+            cf_usuarios_pasados = getattr(foto_pasada, "compliance_usuarios_totales", 0)
+
+            if at_usuarios_pasados > 0:
+                at_crecimiento_pct = ((at_totales - at_usuarios_pasados) / at_usuarios_pasados) * 100
+                
+            if cf_usuarios_pasados > 0:
+                cf_crecimiento_pct = ((cf_totales - cf_usuarios_pasados) / cf_usuarios_pasados) * 100
+    except Exception as e:
+        print(f"[{datetime.utcnow().isoformat()}] [METRICS_WARNING] Variación mensual omitida por estructura de tabla: {str(e)}")
 
     # Estimación de Ingresos unificados (multiplicando los dólares de Compliance por el TC)
     ingresos_usd_cf = (cf_express * 20) + (cf_enterprise * 50)
