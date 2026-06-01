@@ -1,19 +1,14 @@
 import os
-import sys
 from datetime import datetime
 from fastapi import FastAPI, APIRouter, Header, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from dotenv import load_dotenv
-
-# --- Escudo de Rutas para Railway ---
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
 
 load_dotenv()
 
 app = FastAPI(
-    title="Torre de Control",
+    title="Torre de Control - Acceso Directo",
+    description="Panel unificado de monitoreo sin autenticación (Acceso privado vía Railway)",
     version="1.0.0"
 )
 
@@ -43,52 +38,45 @@ def actualizar_tipo_cambio_interno(payload: dict, x_internal_token: str = Header
     return {"status": "actualizado", "nuevo_tipo_cambio": TIPO_CAMBIO}
 
 # =====================================================================
-# 🛡️ CARGA ULTRA-SEGURA DEL DASHBOARD (SIN ERROR 500)
+# 🛡️ CARGA DIRECTA DEL DASHBOARD DESDE LA CARPETA STATIC
 # =====================================================================
-def leer_dashboard_html() -> str:
-    # Escanea todas las carpetas del proyecto buscando tu dashboard.html
-    directorios_a_escanear = ["/app", os.getcwd()]
+def obtener_ruta_dashboard() -> str:
+    # Busca dashboard.html específicamente dentro de la carpeta 'static'
+    base = os.getcwd()
     
-    for base in directorios_a_escanear:
-        if os.path.exists(base):
-            for root, dirs, files in os.walk(base):
-                if "dashboard.html" in files:
-                    ruta_exacta = os.path.join(root, "dashboard.html")
-                    try:
-                        with open(ruta_exacta, "r", encoding="utf-8") as f:
-                            return f.read()
-                    except Exception as e:
-                        return f"<h1>Error al leer el archivo HTML: {e}</h1>"
-    
-    # Si el archivo NO se subió a GitHub, mostramos esto en lugar de crashear:
-    return '''
-    <div style="font-family: sans-serif; padding: 40px; text-align: center; background: #111827; color: white; height: 100vh;">
-        <h2 style="color: #ef4444;">¡Falta el archivo dashboard.html!</h2>
-        <p>El servidor de Python y tu API arrancaron perfecto, pero falta el HTML.</p>
-        <p>Asegurate de haber commiteado el archivo <b>dashboard.html</b> a tu repo de GitHub.</p>
-    </div>
-    '''
+    # Intenta buscar en app/static/dashboard.html (si Railway ejecuta desde /app)
+    ruta_app_static = os.path.join(base, "app", "static", "dashboard.html")
+    if os.path.exists(ruta_app_static):
+        return ruta_app_static
+        
+    # Intenta buscar en static/dashboard.html (si Railway ejecuta desde la raíz del repo)
+    ruta_static = os.path.join(base, "static", "dashboard.html")
+    if os.path.exists(ruta_static):
+        return ruta_static
+        
+    # Fallback relativo
+    return os.path.join("static", "dashboard.html")
 
 @app.get("/", response_class=HTMLResponse)
 def index(): 
-    # Devolvemos el HTML procesado directamente, erradicando el FileResponse
-    return HTMLResponse(content=leer_dashboard_html(), status_code=200)
+    # Carga directa sin pasar por login, buscando en 'static'
+    ruta = obtener_ruta_dashboard()
+    if os.path.exists(ruta):
+        return FileResponse(ruta)
+    
+    # Pantalla de emergencia si sigue sin encontrarlo
+    html_emergencia = f"""
+    <html>
+        <body style='background:#1f2937; color:#f9fafb; font-family:sans-serif; text-align:center; padding:10%;'>
+            <h1 style='color:#60a5fa;'>Torre de Control Activa 🚀</h1>
+            <p>El servidor Python está funcionando, pero el archivo HTML no se encuentra en la ruta esperada.</p>
+            <div style='background:#374151; padding:20px; border-radius:10px; display:inline-block; margin-top:20px;'>
+                <p style='color:#f87171;'>⚠️ No se encontró <b>dashboard.html</b> dentro de la carpeta <b>static</b>.</p>
+                <p style='font-size:14px; color:#9ca3af;'>Ruta buscada: {ruta}</p>
+            </div>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_emergencia, status_code=200)
 
 app.include_router(router)
-
-# =====================================================================
-# 🔌 CONEXIÓN DE MÓDULOS DE MÉTRICAS E IA
-# =====================================================================
-try:
-    from metrics import router as metrics_router
-    app.include_router(metrics_router)
-    print("[OK] Módulo de Métricas conectado.")
-except Exception as e:
-    print(f"[ERROR] No se pudo cargar metrics.py: {e}")
-
-try:
-    from ai_advisor import router as ai_router
-    app.include_router(ai_router)
-    print("[OK] Módulo de IA conectado.")
-except Exception as e:
-    print(f"[ERROR] No se pudo cargar ai_advisor.py: {e}")
