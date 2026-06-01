@@ -1,28 +1,37 @@
+import os
+import sys
+from datetime import datetime
 from fastapi import FastAPI, HTTPException, status, Request, APIRouter, Header
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, EmailStr
-import os
-from datetime import datetime
 from dotenv import load_dotenv
 
-# Importaciones absolutas alineadas a tu estructura real
-from app.auth import AuthManager, router as auth_router
-from app.metrics import router as metrics_router
-from app.ai_advisor import router as ai_router
+# 🔥 INYECCIÓN DE SEGURIDAD PARA EVITAR CRASHES DE RUTAS EN RAILWAY
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Importaciones locales directas (sin prefijo app.)
+from auth import AuthManager, router as auth_router
+from metrics import router as metrics_router
+from ai_advisor import router as ai_router
 
 load_dotenv()
 
 app = FastAPI(
-    title="Panel Central - AlertTrail & ComplianceFlow",
-    description="Panel unificado para monitoreo de usuarios, pagos, métricas y control del tipo de cambio.",
+    title="Torre de Control Central",
+    description="Panel unificado para monitoreo de usuarios, pagos y métricas de AlertTrail y ComplianceFlow.",
     version="1.0.0"
 )
 
 auth_handler = AuthManager()
 router = APIRouter()
 
+def registrar_evento_local(mensaje: str):
+    print(f"[{datetime.utcnow().isoformat()}] [PANEL_CENTRAL] {mensaje}")
+
 # ==========================================
-# CÓDIGO DE CONTROL DE TIPO DE CAMBIO
+# CÓDIGO DE CONTROL DE TIPO DE CAMBIO (IA)
 # ==========================================
 TOKEN_INTERNO_SECRETO = os.getenv("TOKEN_SISTEMAS_SECRETO")
 
@@ -44,8 +53,7 @@ def actualizar_tipo_cambio_interno(payload: dict, x_internal_token: str = Header
         raise HTTPException(status_code=400, detail="Valor de TC inválido")
     
     TIPO_CAMBIO = float(nuevo_tc)
-    # Log directo en la consola de Railway sin depender de módulos externos
-    print(f"[{datetime.utcnow().isoformat()}] [TC_UPDATE] Tipo de cambio actualizado a: {TIPO_CAMBIO}")
+    registrar_evento_local(f"Tipo de cambio actualizado dinámicamente a: {TIPO_CAMBIO}")
     return {"status": "actualizado", "nuevo_tipo_cambio": TIPO_CAMBIO}
 
 
@@ -89,7 +97,7 @@ def login(usuario: UserLogin):
     return {"mensaje": "Acceso concedido"}
 
 
-# Acoplamiento de todos los módulos del ecosistema
+# Registro de routers del ecosistema
 app.include_router(router)
 app.include_router(metrics_router)
 app.include_router(ai_router)
