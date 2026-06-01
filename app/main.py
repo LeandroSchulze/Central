@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(
-    title="Panel Central - AlertTrail & ComplianceFlow",
-    description="Panel unificado para monitoreo de usuarios, pagos, métricas y control del tipo de cambio.",
+    title="Torre de Control",
+    description="Panel unificado para monitoreo de métricas y control del tipo de cambio.",
     version="1.0.0"
 )
 
@@ -67,64 +67,30 @@ class UserLogin(BaseModel):
 
 
 # =====================================================================
-# 🛡️ BUSCADOR ULTRA-AGRESIVO DE HTML (EVITA CRASH 500)
+# 🛡️ BUSCADOR ENFOCADO ÚNICAMENTE EN DASHBOARD.HTML
 # =====================================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def obtener_ruta_template(nombre_archivo: str) -> str:
-    # Mapea TODAS las combinaciones posibles donde podrías haber guardado el HTML
+def obtener_ruta_dashboard() -> str:
+    # Busca tu dashboard.html en las carpetas comunes
     rutas_a_probar = [
-        os.path.join(BASE_DIR, "templates", nombre_archivo),                  # app/app/templates/
-        os.path.join(os.path.dirname(BASE_DIR), "templates", nombre_archivo), # app/templates/
-        os.path.join(BASE_DIR, nombre_archivo),                               # Suelto junto al main.py
-        os.path.join(os.path.dirname(BASE_DIR), nombre_archivo),              # Suelto en la raíz del repo
-        os.path.join(os.getcwd(), "templates", nombre_archivo),               # Ruta de ejecución local templates/
-        os.path.join(os.getcwd(), nombre_archivo)                             # Ruta de ejecución local raíz
+        os.path.join(BASE_DIR, "templates", "dashboard.html"),
+        os.path.join(os.path.dirname(BASE_DIR), "templates", "dashboard.html"),
+        os.path.join(os.getcwd(), "templates", "dashboard.html")
     ]
     
     for ruta in rutas_a_probar:
         if os.path.exists(ruta):
             return ruta
             
-    return ""  # Retorna vacío si el archivo realmente no existe en ningún lado
-
-def respuesta_html_segura(nombre_archivo: str):
-    ruta = obtener_ruta_template(nombre_archivo)
-    
-    if ruta and os.path.exists(ruta):
-        return FileResponse(ruta)
-    
-    # Si el archivo HTML no está en el repo, devolvemos una web de emergencia (Status 200 OK)
-    html_emergencia = f"""
-    <html>
-        <body style='background:#1f2937; color:#f9fafb; font-family:sans-serif; text-align:center; padding:10%;'>
-            <h1 style='color:#60a5fa;'>Torre de Control Activa 🚀</h1>
-            <p>El servidor Python y la API están funcionando perfectamente en producción.</p>
-            <div style='background:#374151; padding:20px; border-radius:10px; display:inline-block; margin-top:20px;'>
-                <p style='color:#f87171;'>⚠️ Alerta Visual: No se encontró el archivo <b>{nombre_archivo}</b></p>
-                <p style='font-size:14px; color:#9ca3af;'>Revisá que hayas subido este archivo a GitHub/Railway.</p>
-            </div>
-            <br><br>
-            <a href='/docs' style='color:#34d399; text-decoration:none; font-weight:bold;'>Ver Endpoints de la API (Swagger)</a>
-        </body>
-    </html>
-    """
-    return HTMLResponse(content=html_emergencia, status_code=200)
+    return "templates/dashboard.html"
 
 
-# --- VISTAS HTML PROTEGIDAS ---
+# --- ÚNICA VISTA HTML ---
 @app.get("/", response_class=HTMLResponse)
 def index(): 
-    return respuesta_html_segura("index.html")
-
-@app.get("/dashboard", response_class=HTMLResponse)
-def dashboard(): 
-    # Sabemos que tenés 'dashboard.html', con esta función lo va a encontrar sí o sí.
-    return respuesta_html_segura("dashboard.html")
-
-@app.get("/login", response_class=HTMLResponse)
-def mostrar_login(): 
-    return respuesta_html_segura("login.html")
+    # Al entrar a la web, carga directamente tu Torre de Control
+    return FileResponse(obtener_ruta_dashboard())
 
 
 # --- AUTENTICACIÓN ---
