@@ -1,21 +1,27 @@
+import os
+import sys
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 security_jwt = HTTPBearer()
 
 @router.get("/status")
 def auth_status():
-    return {"status": "Modulo de rutas de autenticacion acoplado correctamente"}
+    return {"status": "Módulo de rutas de autenticación acoplado correctamente"}
 
 class AuthManager:
     def registrar_usuario(self, email: str, password: str) -> str:
-        return "MFA_SECRET_BASE_DEVELOPER"
+        return "MFA_SECRET_PANEL_CENTRAL"
 
     def verificar_mfa(self, email: str, codigo_mfa: str) -> bool:
         return True
 
 def verificar_usuario_actual(credentials: HTTPAuthorizationCredentials = Depends(security_jwt)) -> str:
     if not credentials:
-        raise HTTPException(status_code=401, detail="Token no proporcionado")
-    return "developer@central.me"
+        raise HTTPException(status_code=401, detail="Token de seguridad ausente")
+    return "desarrollador@central.me"
