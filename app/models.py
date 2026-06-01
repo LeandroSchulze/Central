@@ -1,6 +1,15 @@
+import os
+import sys
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from datetime import datetime
-from app.database import BasePanel
+
+# 🔥 INYECCIÓN DE SEGURIDAD PARA EVITAR CRASHES DE RUTAS EN RAILWAY
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# IMPORTACIÓN PLANA CORREGIDA (Sin el prefijo app.)
+from database import BasePanel
 
 class HistorialMetricas(BasePanel):
     __tablename__ = "historial_metricas"
