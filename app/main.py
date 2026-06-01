@@ -1,24 +1,20 @@
-# app/main.py
 from fastapi import FastAPI, HTTPException, status, Request, APIRouter, Header
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, EmailStr
 import os
-import psycopg2
 from datetime import datetime
 from dotenv import load_dotenv
 
-# CORRECCIÓN: Rutas de importación explícitas con prefijo app.
-from app.auth import AuthManager
-from app.security import registrar_evento
+# Importaciones absolutas alineadas a tu estructura real
+from app.auth import AuthManager, router as auth_router
 from app.metrics import router as metrics_router
 from app.ai_advisor import router as ai_router
-from app.auth import router as auth_router
 
 load_dotenv()
 
 app = FastAPI(
-    title="Torre de Control Central",
-    description="Panel unificado para monitoreo de usuarios, pagos y métricas de AlertTrail y ComplianceFlow.",
+    title="Panel Central - AlertTrail & ComplianceFlow",
+    description="Panel unificado para monitoreo de usuarios, pagos, métricas y control del tipo de cambio.",
     version="1.0.0"
 )
 
@@ -48,7 +44,8 @@ def actualizar_tipo_cambio_interno(payload: dict, x_internal_token: str = Header
         raise HTTPException(status_code=400, detail="Valor de TC inválido")
     
     TIPO_CAMBIO = float(nuevo_tc)
-    registrar_evento(f"Tipo de cambio actualizado dinámicamente a: {TIPO_CAMBIO}")
+    # Log directo en la consola de Railway sin depender de módulos externos
+    print(f"[{datetime.utcnow().isoformat()}] [TC_UPDATE] Tipo de cambio actualizado a: {TIPO_CAMBIO}")
     return {"status": "actualizado", "nuevo_tipo_cambio": TIPO_CAMBIO}
 
 
@@ -92,7 +89,7 @@ def login(usuario: UserLogin):
     return {"mensaje": "Acceso concedido"}
 
 
-# CORRECCIÓN: Inclusión obligatoria de todos los routers del ecosistema
+# Acoplamiento de todos los módulos del ecosistema
 app.include_router(router)
 app.include_router(metrics_router)
 app.include_router(ai_router)
