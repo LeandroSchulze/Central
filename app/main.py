@@ -1,20 +1,14 @@
 import os
-import sys
 from datetime import datetime
-from fastapi import FastAPI, HTTPException, status, Request, APIRouter, Header
+from fastapi import FastAPI, HTTPException, status, APIRouter, Header
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, EmailStr
 from dotenv import load_dotenv
 
-# 🔥 INYECCIÓN DE SEGURIDAD PARA EVITAR CRASHES DE RUTAS EN RAILWAY
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-
-# Importaciones locales directas (sin prefijo app.)
-from auth import AuthManager, router as auth_router
-from metrics import router as metrics_router
-from ai_advisor import router as ai_router
+# IMPORTACIONES ABSOLUTAS REALES BASADAS EN TU CARPETA 'ROUTERS'
+from app.routers.auth import AuthManager, router as auth_router
+from app.routers.metrics import router as metrics_router
+from app.routers.ai_advisor import router as ai_router
 
 load_dotenv()
 
@@ -97,7 +91,7 @@ def login(usuario: UserLogin):
     return {"mensaje": "Acceso concedido"}
 
 
-# Registro de routers del ecosistema
+# Inyección de routers del ecosistema
 app.include_router(router)
 app.include_router(metrics_router)
 app.include_router(ai_router)
